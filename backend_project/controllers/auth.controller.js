@@ -2,7 +2,7 @@ const User = require("../models/user.model.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { BrevoClient } = require("@getbrevo/brevo");
 const { Op } = require("sequelize");
 
 exports.register = async (req, res) => {
@@ -98,34 +98,49 @@ exports.forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
         await user.save();
 
-        const transporter = nodemailer.createTransport({
-            service: "Gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS,
-            },
-        });
-
+        // Send email via Brevo API
+        const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
         const resetUrl = `http://localhost:5173/reset-password/${token}`;
-        const mailOptions = {
-            to: user.email,
-            from: process.env.EMAIL_USER,
+
+        const emailData = {
             subject: "Password Reset Request",
-            text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n` +
-                `Please click on the following link, or paste this into your browser to complete the process:\n\n` +
-                `${resetUrl}\n\n` +
-                `If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+            htmlContent: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
+                    <h2 style="color: #1e293b; text-align: center;">Password Reset Request</h2>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                        Hello <strong>${user.name}</strong>,
+                    </p>
+                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+                        You are receiving this because you (or someone else) have requested the reset of the password for your account.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+                        If you did not request this, please ignore this email and your password will remain unchanged.
+                    </p>
+                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
+                        If the button above doesn't work, copy and paste this link into your browser: <br>
+                        <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a>
+                    </p>
+                </div>
+            `,
+            sender: { "name": "Admin Dashboard", "email": process.env.EMAIL_FROM || "no-reply@admin.com" },
+            to: [{ "email": user.email, "name": user.name }]
         };
 
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        if (!process.env.BREVO_API_KEY) {
             console.log("-----------------------");
-            console.log("EMAIL NOT CONFIGURED!");
+            console.log("BREVO API KEY NOT CONFIGURED!");
             console.log("Reset Link for", email, ":", resetUrl);
             console.log("-----------------------");
             return res.json({ message: "Link simulation successful! Check terminal for the link." });
         }
 
-        await transporter.sendMail(mailOptions);
+        await client.transactionalEmails.sendTransacEmail(emailData);
         res.json({ message: "Reset link sent to your email" });
     } catch (err) {
         res.status(500).json({ message: err.message });
