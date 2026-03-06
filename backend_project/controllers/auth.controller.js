@@ -104,30 +104,59 @@ exports.forgotPassword = async (req, res) => {
         const resetUrl = `http://localhost:5173/reset-password/${token}`;
 
         const emailData = {
-            subject: "Password Reset Request",
+            subject: "Reset Your AdminPro Password",
             htmlContent: `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
-                    <h2 style="color: #1e293b; text-align: center;">Password Reset Request</h2>
-                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        Hello <strong>${user.name}</strong>,
-                    </p>
-                    <p style="color: #475569; font-size: 16px; line-height: 1.6;">
-                        You are receiving this because you (or someone else) have requested the reset of the password for your account.
-                    </p>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">
-                            Reset Password
-                        </a>
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; }
+                        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+                        .header { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 20px; text-align: center; }
+                        .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em; }
+                        .content { padding: 40px; color: #334155; line-height: 1.6; }
+                        .greeting { font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 16px; }
+                        .text { font-size: 16px; margin-bottom: 24px; color: #475569; }
+                        .button-container { text-align: center; margin: 36px 0; }
+                        .button { background-color: #4f46e5; color: #ffffff !important; padding: 14px 32px; text-decoration: none; font-weight: 700; border-radius: 12px; display: inline-block; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+                        .expiry-note { font-size: 13px; color: #94a3b8; text-align: center; margin-top: 24px; }
+                        .security-notice { background-color: #f1f5f9; padding: 20px; border-radius: 12px; margin-top: 32px; border-left: 4px solid #4f46e5; }
+                        .security-notice p { margin: 0; font-size: 13px; color: #64748b; }
+                        .footer { padding: 30px; text-align: center; background-color: #f8fafc; border-top: 1px solid #e2e8f0; }
+                        .footer p { margin: 4px 0; font-size: 12px; color: #94a3b8; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>AdminPro</h1>
+                        </div>
+                        <div class="content">
+                            <p class="greeting">Hello, ${user.name}</p>
+                            <p class="text">We received a request to reset the password for your account. Click the button below to choose a new password. This link is unique to your account and should not be shared.</p>
+                            
+                            <div class="button-container">
+                                <a href="${resetUrl}" class="button">Reset My Password</a>
+                            </div>
+
+                            <p class="text">If you didn't request this, you can safely ignore this email. Your password won't change unless you click the link above and create a new one.</p>
+                            
+                            <p class="expiry-note">This link will expire in <strong>60 minutes</strong> for security reasons.</p>
+
+                            <div class="security-notice">
+                                <p><strong>Security Tip:</strong> Always ensure you are on the official <strong>AdminPro</strong> domain before entering your credentials. We will never ask for your password via email.</p>
+                            </div>
+                        </div>
+                        <div class="footer">
+                            <p>&copy; ${new Date().getFullYear()} AdminPro Dashboard. All rights reserved.</p>
+                            <p>Industrial Area, Corporate Park, City Central</p>
+                            <p>Support: support@adminpro.com</p>
+                        </div>
                     </div>
-                    <p style="color: #475569; font-size: 14px; line-height: 1.6;">
-                        If you did not request this, please ignore this email and your password will remain unchanged.
-                    </p>
-                    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    <p style="color: #94a3b8; font-size: 12px; text-align: center;">
-                        If the button above doesn't work, copy and paste this link into your browser: <br>
-                        <a href="${resetUrl}" style="color: #2563eb;">${resetUrl}</a>
-                    </p>
-                </div>
+                </body>
+                </html>
             `,
             sender: { "name": "Admin Dashboard", "email": process.env.EMAIL_FROM || "no-reply@admin.com" },
             to: [{ "email": user.email, "name": user.name }]
@@ -141,8 +170,30 @@ exports.forgotPassword = async (req, res) => {
             return res.json({ message: "Link simulation successful! Check terminal for the link." });
         }
 
-        await client.transactionalEmails.sendTransacEmail(emailData);
-        res.json({ message: "Reset link sent to your email" });
+        try {
+            await client.transactionalEmails.sendTransacEmail(emailData);
+            res.json({ message: "Reset link sent to your email" });
+        } catch (mailErr) {
+            console.error("Brevo Email Error:", mailErr.response?.body || mailErr.message);
+
+            // Log link to terminal as fallback
+            console.log("-----------------------");
+            console.log("SECURITY FALLBACK LOGGED:");
+            console.log("User Email:", email);
+            console.log("Reset Link:", resetUrl);
+            console.log("Cause:", mailErr.response?.body?.message || "Brevo IP or API error");
+            console.log("-----------------------");
+
+            if (mailErr.response?.statusCode === 401 && mailErr.response?.body?.code === "unauthorized") {
+                return res.status(200).json({
+                    message: "ALERT: Your IP address is not authorized in Brevo. To send real emails, authorize your IP in Brevo settings. FOR NOW, YOUR RESET LINK HAS BEEN LOGGED TO THE BACKEND TERMINAL.",
+                    ipAddress: "103.240.170.248",
+                    instruction: "Check your backend terminal for the reset link!"
+                });
+            }
+
+            res.status(200).json({ message: "Note: Email service encountered an error, but the reset link has been logged to the terminal for development purposes.", linkInTerminal: true });
+        }
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
