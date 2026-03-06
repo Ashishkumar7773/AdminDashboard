@@ -52,7 +52,8 @@ exports.login = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 5, search = "" } = req.query;
+        const { page = 1, limit = 5, search = "", sortBy = "createdAt", order = "DESC" } = req.query;
+        console.log("Backend getAllUsers Query Params:", { page, limit, search, sortBy, order });
         const offset = (page - 1) * limit;
 
         const { count, rows } = await User.findAndCountAll({
@@ -65,7 +66,7 @@ exports.getAllUsers = async (req, res) => {
             attributes: { exclude: ["password"] },
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [['createdAt', 'DESC']]
+            order: [[sortBy, order]]
         });
 
         const totalAdmins = await User.count({ where: { role: 'admin' } });

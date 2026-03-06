@@ -20,6 +20,7 @@ const AdminDashboard = () => {
     const [activeView, setActiveView] = useState("employees"); // 'employees' or 'admins'
     const [admins, setAdmins] = useState([]);
     const [editId, setEditId] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "DESC" });
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -41,8 +42,9 @@ const AdminDashboard = () => {
 
     const fetchEmployees = async () => {
         setLoading(true);
+        console.log("Fetching employees with sort:", sortConfig);
         try {
-            const res = await API.get(`/employees?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
+            const res = await API.get(`/employees?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}`);
             setEmployees(res.data.employees);
             setTotalPages(res.data.pages);
             setTotalRecords(res.data.total);
@@ -58,8 +60,9 @@ const AdminDashboard = () => {
 
     const fetchAdmins = async () => {
         setLoading(true);
+        console.log("Fetching admins with sort:", sortConfig);
         try {
-            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
+            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}`);
             setAdmins(res.data.users);
             setTotalPages(res.data.pages);
             setTotalRecords(res.data.total);
@@ -83,7 +86,16 @@ const AdminDashboard = () => {
         } else {
             fetchAdmins();
         }
-    }, [currentPage, searchTerm, activeView]);
+    }, [currentPage, searchTerm, activeView, sortConfig]);
+
+    const handleSort = (key) => {
+        let direction = "ASC";
+        if (sortConfig.key === key && sortConfig.direction === "ASC") {
+            direction = "DESC";
+        }
+        setSortConfig({ key, direction });
+        setCurrentPage(1);
+    };
 
     const handleEdit = (item) => {
         setEditId(item.id);
@@ -248,12 +260,16 @@ const AdminDashboard = () => {
                                     employees={employees}
                                     refresh={fetchEmployees}
                                     onEdit={handleEdit}
+                                    onSort={handleSort}
+                                    sortConfig={sortConfig}
                                 />
                             ) : (
                                 <UserTable
                                     users={admins}
                                     refresh={fetchAdmins}
                                     onEdit={handleEdit}
+                                    onSort={handleSort}
+                                    sortConfig={sortConfig}
                                 />
                             )}
                         </div>

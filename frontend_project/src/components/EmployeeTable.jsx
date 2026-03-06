@@ -1,7 +1,38 @@
 import React from "react";
 import API from "../services/api";
 
-const EmployeeTable = ({ employees, refresh, onEdit }) => {
+const EmployeeTable = ({ employees, refresh, onEdit, onSort, sortConfig }) => {
+    const SortHeader = ({ label, sortKey }) => {
+        const isActive = sortConfig?.key === sortKey;
+        return (
+            <th
+                className={`px-6 py-4 text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors ${isActive ? 'text-primary' : 'text-slate-500'}`}
+                onClick={() => onSort(sortKey)}
+            >
+                <div className="flex items-center space-x-1">
+                    <span>{label}</span>
+                    {isActive ? (
+                        sortConfig.direction === 'ASC' ? (
+                            <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
+                            </svg>
+                        ) : (
+                            <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        )
+                    ) : (
+                        <svg className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                    )}
+                </div>
+            </th>
+        );
+    };
+
+    console.log("Rendering EmployeeTable with:", employees.length, "employees");
+
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this employee?")) return;
         try {
@@ -35,10 +66,10 @@ const EmployeeTable = ({ employees, refresh, onEdit }) => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Employee</th>
-                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
-                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Department</th>
-                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Salary</th>
+                            <SortHeader label="Employee" sortKey="name" />
+                            <SortHeader label="Contact" sortKey="email" />
+                            <SortHeader label="Department" sortKey="department" />
+                            <SortHeader label="Salary" sortKey="salary" />
                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>

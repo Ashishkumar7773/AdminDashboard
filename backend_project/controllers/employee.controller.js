@@ -12,7 +12,8 @@ exports.createEmployee = async (req, res) => {
 
 exports.getEmployees = async (req, res) => {
     try {
-        const { page = 1, limit = 5, search = "" } = req.query;
+        const { page = 1, limit = 5, search = "", sortBy = "createdAt", order = "DESC" } = req.query;
+        console.log("Backend getEmployees Query Params:", { page, limit, search, sortBy, order });
         const offset = (page - 1) * limit;
 
         const { count, rows } = await Employee.findAndCountAll({
@@ -24,7 +25,7 @@ exports.getEmployees = async (req, res) => {
             },
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [['createdAt', 'DESC']]
+            order: [[sortBy, order]]
         });
 
         const totalEmployees = await Employee.count();
