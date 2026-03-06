@@ -76,7 +76,7 @@ const EmployeeTable = ({ employees, refresh, onEdit, onSort, sortConfig }) => {
                     <tbody className="divide-y divide-slate-100">
                         {employees.length > 0 ? (
                             employees.map((emp) => (
-                                <tr key={emp.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+                                <tr key={emp.id} className="group hover:bg-slate-50/80 transition-all duration-200 cursor-pointer select-none">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg shadow-sm border border-primary/10 group-hover:scale-110 transition-transform">

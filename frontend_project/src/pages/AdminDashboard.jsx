@@ -20,7 +20,6 @@ const AdminDashboard = () => {
     const [activeView, setActiveView] = useState("employees"); // 'employees' or 'admins'
     const [admins, setAdmins] = useState([]);
     const [editId, setEditId] = useState(null);
-    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "DESC" });
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -42,9 +41,8 @@ const AdminDashboard = () => {
 
     const fetchEmployees = async () => {
         setLoading(true);
-        console.log("Fetching employees with sort:", sortConfig);
         try {
-            const res = await API.get(`/employees?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}`);
+            const res = await API.get(`/employees?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
             setEmployees(res.data.employees);
             setTotalPages(res.data.pages);
             setTotalRecords(res.data.total);
@@ -60,9 +58,8 @@ const AdminDashboard = () => {
 
     const fetchAdmins = async () => {
         setLoading(true);
-        console.log("Fetching admins with sort:", sortConfig);
         try {
-            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}`);
+            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
             setAdmins(res.data.users);
             setTotalPages(res.data.pages);
             setTotalRecords(res.data.total);
@@ -86,16 +83,7 @@ const AdminDashboard = () => {
         } else {
             fetchAdmins();
         }
-    }, [currentPage, searchTerm, activeView, sortConfig]);
-
-    const handleSort = (key) => {
-        let direction = "ASC";
-        if (sortConfig.key === key && sortConfig.direction === "ASC") {
-            direction = "DESC";
-        }
-        setSortConfig({ key, direction });
-        setCurrentPage(1);
-    };
+    }, [currentPage, searchTerm, activeView]);
 
     const handleEdit = (item) => {
         setEditId(item.id);
@@ -161,21 +149,21 @@ const AdminDashboard = () => {
                 <nav className="flex-1 p-4 space-y-2">
                     <button
                         onClick={() => { setActiveView("employees"); closeModal(); }}
-                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors ${activeView === "employees" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
+                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "employees" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 01-9-4.915" /></svg>
                         <span>Employees</span>
                     </button>
                     <button
                         onClick={() => { setActiveView("admins"); closeModal(); }}
-                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors ${activeView === "admins" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
+                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "admins" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         <span>Admins</span>
                     </button>
                 </nav>
                 <div className="p-4 border-t border-slate-700">
-                    <button onClick={handleLogout} className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
+                    <button onClick={handleLogout} className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-red-500/10 text-red-400 transition-colors cursor-pointer">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         <span>Logout</span>
                     </button>
@@ -210,8 +198,8 @@ const AdminDashboard = () => {
                             <button
                                 onClick={() => setShowForm(!showForm)}
                                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${showForm
-                                    ? "bg-red-500 hover:bg-red-600 text-white"
-                                    : "bg-primary hover:bg-primary-dark text-white"
+                                    ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                                    : "bg-primary hover:bg-primary-dark text-white cursor-pointer"
                                     }`}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,16 +248,12 @@ const AdminDashboard = () => {
                                     employees={employees}
                                     refresh={fetchEmployees}
                                     onEdit={handleEdit}
-                                    onSort={handleSort}
-                                    sortConfig={sortConfig}
                                 />
                             ) : (
                                 <UserTable
                                     users={admins}
                                     refresh={fetchAdmins}
                                     onEdit={handleEdit}
-                                    onSort={handleSort}
-                                    sortConfig={sortConfig}
                                 />
                             )}
                         </div>

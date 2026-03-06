@@ -1,38 +1,7 @@
 import React from "react";
 import API from "../services/api";
 
-const UserTable = ({ users, refresh, onEdit, onSort, sortConfig }) => {
-    const SortHeader = ({ label, sortKey }) => {
-        const isActive = sortConfig?.key === sortKey;
-        return (
-            <th
-                className={`px-6 py-4 text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors ${isActive ? 'text-primary' : 'text-slate-500'}`}
-                onClick={() => onSort(sortKey)}
-            >
-                <div className="flex items-center space-x-1">
-                    <span>{label}</span>
-                    {isActive ? (
-                        sortConfig.direction === 'ASC' ? (
-                            <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
-                            </svg>
-                        ) : (
-                            <svg className="w-3 h-3 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        )
-                    ) : (
-                        <svg className="w-3 h-3 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
-                    )}
-                </div>
-            </th>
-        );
-    };
-
-    console.log("Rendering UserTable with:", users.length, "users");
-
+const UserTable = ({ users, refresh, onEdit }) => {
     const getRoleColor = (role) => {
         const colors = {
             admin: "bg-indigo-100 text-indigo-700 border-indigo-200",
@@ -57,17 +26,17 @@ const UserTable = ({ users, refresh, onEdit, onSort, sortConfig }) => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
-                            <SortHeader label="User Info" sortKey="name" />
-                            <SortHeader label="Email" sortKey="email" />
-                            <SortHeader label="Role" sortKey="role" />
-                            <SortHeader label="Joined Date" sortKey="createdAt" />
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">User Info</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Joined Date</th>
                             <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {users.length > 0 ? (
                             users.map((user) => (
-                                <tr key={user.id} className="group hover:bg-slate-50/80 transition-all duration-200">
+                                <tr key={user.id} className="group hover:bg-slate-50/80 transition-all duration-200 cursor-pointer select-none">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/10 to-indigo-500/20 flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm border border-indigo-500/10 group-hover:scale-110 transition-transform">

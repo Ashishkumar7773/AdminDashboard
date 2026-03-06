@@ -9,8 +9,32 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased cursor-default select-none;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label,
+  p,
+  span {
+    @apply cursor-default select-none;
+  }
+
+  input,
+  textarea {
+    @apply cursor-text select-text;
+  }
+
+  button,
+  a,
+  select,
+  [role="button"] {
+    @apply cursor-pointer;
   }
 }
 
@@ -18,11 +42,11 @@
   .btn-primary {
     @apply bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md;
   }
-  
+
   .input-field {
     @apply w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white;
   }
-  
+
   .card {
     @apply bg-white rounded-xl shadow-sm border border-slate-100 p-6;
   }
