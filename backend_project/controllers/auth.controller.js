@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { BrevoClient } = require("@getbrevo/brevo");
 const { Op } = require("sequelize");
+const Employee = require("../models/employee.model.js");
 
 exports.register = async (req, res) => {
     try {
@@ -44,7 +45,11 @@ exports.login = async (req, res) => {
             { expiresIn: "1d" }
         );
 
-        res.json({ token });
+        // Remove password from user object before sending
+        const userResponse = { ...user.toJSON() };
+        delete userResponse.password;
+
+        res.json({ token, user: userResponse });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -52,17 +57,23 @@ exports.login = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 5, search = "", sortBy = "createdAt", order = "DESC" } = req.query;
-        console.log("Backend getAllUsers Query Params:", { page, limit, search, sortBy, order });
+        const { page = 1, limit = 5, search = "", sortBy = "createdAt", order = "DESC", role = "" } = req.query;
+        console.log("Backend getAllUsers Query Params:", { page, limit, search, sortBy, order, role });
         const offset = (page - 1) * limit;
 
+        const whereClause = {
+            [Op.or]: [
+                { name: { [Op.like]: `%${search}%` } },
+                { email: { [Op.like]: `%${search}%` } }
+            ]
+        };
+
+        if (role) {
+            whereClause.role = role;
+        }
+
         const { count, rows } = await User.findAndCountAll({
-            where: {
-                [Op.or]: [
-                    { name: { [Op.like]: `%${search}%` } },
-                    { email: { [Op.like]: `%${search}%` } }
-                ]
-            },
+            where: whereClause,
             attributes: { exclude: ["password"] },
             limit: parseInt(limit),
             offset: parseInt(offset),
@@ -246,6 +257,29 @@ exports.deleteUser = async (req, res) => {
         }
         await User.destroy({ where: { id: req.params.id } });
         res.json({ message: "User deleted" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const totalEmployees = await Employee.count();
+        const totalAdmins = await User.count({
+            where: {
+                role: { [Op.in]: ['Admin', 'SuperAdmin'] }
+            }
+        });
+        const totalUsers = await User.count({
+            where: {
+                role: 'user'
+            }
+        });
+
+        res.json({
+            totalEmployees,
+            totalAdmins,
+            totalUsers
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

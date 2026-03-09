@@ -1,23 +1,21 @@
 import React, { useState } from "react";
-import API from "../services/api";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../redux/slices/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
     const [form, setForm] = useState({ email: "", password: "" });
-    const [loading, setLoading] = useState(false);
+    const { loading } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        try {
-            const res = await API.post("/auth/login", form);
-            localStorage.setItem("token", res.data.token);
+        const result = await dispatch(loginUser(form));
+        if (loginUser.fulfilled.match(result)) {
             navigate("/admin");
-        } catch (err) {
-            alert("Invalid Login Credentials!");
-        } finally {
-            setLoading(false);
+        } else {
+            alert(result.payload || "Invalid Login Credentials!");
         }
     };
 

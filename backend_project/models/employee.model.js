@@ -6,6 +6,11 @@ const Employee = sequelize.define("Employee", {
     email: DataTypes.STRING,
     salary: DataTypes.INTEGER,
     department: DataTypes.STRING,
+    photo: DataTypes.STRING,
+    status: {
+        type: DataTypes.ENUM("Active", "Inactive", "On Leave"),
+        defaultValue: "Active",
+    },
 });
 
 module.exports = Employee;

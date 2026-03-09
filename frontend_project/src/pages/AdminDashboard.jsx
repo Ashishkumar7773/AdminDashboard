@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchEmployees as fetchEmployeesAction } from "../redux/slices/employeeSlice";
+import { logout } from "../redux/slices/authSlice";
 import API from "../services/api";
 import EmployeeTable from "../components/EmployeeTable";
 import UserTable from "../components/UserTable";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const AdminDashboard = () => {
-    const [employees, setEmployees] = useState([]);
+    const dispatch = useDispatch();
+    const { list: employees, total: totalRecords, pages: totalPages, currentPage: reduxPage, loading: employeesLoading } = useSelector(state => state.employees);
+    const { user } = useSelector(state => state.auth);
+
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -20,56 +27,56 @@ const AdminDashboard = () => {
     const [activeView, setActiveView] = useState("employees"); // 'employees' or 'admins'
     const [admins, setAdmins] = useState([]);
     const [editId, setEditId] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "DESC" });
+    const [selectedDept, setSelectedDept] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("");
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalRecords, setTotalRecords] = useState(0);
     const [stats, setStats] = useState({
         totalEmployees: 0,
         totalAdmins: 0,
         totalUsers: 0
     });
+
+    const fetchStats = async () => {
+        try {
+            const res = await API.get("/auth/stats");
+            setStats(res.data);
+        } catch (err) {
+            console.error("Error fetching stats", err);
+        }
+    };
     const pageSize = 5;
 
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
+        dispatch(logout());
         navigate("/login");
     };
 
-    const fetchEmployees = async () => {
-        setLoading(true);
-        try {
-            const res = await API.get(`/employees?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
-            setEmployees(res.data.employees);
-            setTotalPages(res.data.pages);
-            setTotalRecords(res.data.total);
-            if (res.data.stats) {
-                setStats(prev => ({ ...prev, totalEmployees: res.data.stats.totalEmployees }));
-            }
-        } catch (err) {
-            navigate("/login");
-        } finally {
-            setLoading(false);
-        }
+    const fetchEmployees = () => {
+        dispatch(fetchEmployeesAction({
+            page: currentPage,
+            limit: pageSize,
+            search: searchTerm,
+            sortBy: sortConfig.key,
+            order: sortConfig.direction,
+            department: selectedDept,
+            status: selectedStatus
+        }));
     };
 
     const fetchAdmins = async () => {
         setLoading(true);
         try {
-            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}`);
+            // Map activeView to backend role filter
+            const roleFilter = activeView === "admins" ? "Admin" : (activeView === "users" ? "user" : "");
+            const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}&role=${roleFilter}`);
             setAdmins(res.data.users);
             setTotalPages(res.data.pages);
             setTotalRecords(res.data.total);
-            if (res.data.stats) {
-                setStats(prev => ({
-                    ...prev,
-                    totalAdmins: res.data.stats.totalAdmins,
-                    totalUsers: res.data.stats.totalUsers
-                }));
-            }
         } catch (err) {
             console.error("Error fetching admins", err);
         } finally {
@@ -78,12 +85,22 @@ const AdminDashboard = () => {
     };
 
     useEffect(() => {
+        fetchStats();
         if (activeView === "employees") {
             fetchEmployees();
         } else {
             fetchAdmins();
         }
-    }, [currentPage, searchTerm, activeView]);
+    }, [currentPage, searchTerm, activeView, sortConfig, selectedDept, selectedStatus]);
+
+    const handleSort = (key) => {
+        let direction = "ASC";
+        if (sortConfig.key === key && sortConfig.direction === "ASC") {
+            direction = "DESC";
+        }
+        setSortConfig({ key, direction });
+        setCurrentPage(1);
+    };
 
     const handleEdit = (item) => {
         setEditId(item.id);
@@ -93,7 +110,7 @@ const AdminDashboard = () => {
         };
 
         if (activeView === "employees") {
-            setForm({ ...baseForm, salary: item.salary, department: item.department });
+            setForm({ ...baseForm, salary: item.salary, department: item.department, status: item.status || "Active", photo: null });
         } else {
             setForm({ ...baseForm, role: item.role, password: "" });
         }
@@ -105,27 +122,43 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             if (activeView === "employees") {
+                const formData = new FormData();
+                formData.append("name", form.name);
+                formData.append("email", form.email);
+                formData.append("salary", form.salary);
+                formData.append("department", form.department);
+                formData.append("status", form.status);
+                if (form.photo) {
+                    formData.append("photo", form.photo);
+                }
+
                 if (editId) {
-                    await API.put(`/employees/${editId}`, form);
-                    alert("Employee updated successfully!");
+                    await API.put(`/employees/${editId}`, formData, {
+                        headers: { "Content-Type": "multipart/form-data" }
+                    });
+                    toast.success("Employee updated successfully!");
                 } else {
-                    await API.post("/employees", form);
-                    alert("Employee added successfully!");
+                    await API.post("/employees", formData, {
+                        headers: { "Content-Type": "multipart/form-data" }
+                    });
+                    toast.success("Employee added successfully!");
                 }
                 fetchEmployees();
+                fetchStats();
             } else {
                 if (editId) {
                     await API.put(`/auth/users/${editId}`, form);
-                    alert("User updated successfully!");
+                    toast.success("User updated successfully!");
                 } else {
                     await API.post("/auth/register", form);
-                    alert("User added successfully!");
+                    toast.success("User added successfully!");
                 }
                 fetchAdmins();
+                fetchStats();
             }
             closeModal();
         } catch (err) {
-            alert(err.response?.data?.message || "Error processing request!");
+            toast.error(err.response?.data?.message || "Error processing request!");
         } finally {
             setLoading(false);
         }
@@ -134,7 +167,7 @@ const AdminDashboard = () => {
     const closeModal = () => {
         setShowForm(false);
         setEditId(null);
-        setForm({ name: "", email: "", salary: "", department: "", role: "user", password: "" });
+        setForm({ name: "", email: "", salary: "", department: "", role: "user", password: "", status: "Active", photo: null });
     };
 
     return (
@@ -161,6 +194,13 @@ const AdminDashboard = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         <span>Admins</span>
                     </button>
+                    <button
+                        onClick={() => { setActiveView("users"); closeModal(); }}
+                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "users" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <span>Users</span>
+                    </button>
                 </nav>
                 <div className="p-4 border-t border-slate-700">
                     <button onClick={handleLogout} className="flex items-center space-x-3 p-3 w-full rounded-lg hover:bg-red-500/10 text-red-400 transition-colors cursor-pointer">
@@ -174,9 +214,12 @@ const AdminDashboard = () => {
             <main className="flex-1 overflow-y-auto">
                 <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10">
                     <div className="container mx-auto flex justify-between items-center">
-                        <h2 className="text-xl font-semibold text-slate-800">Overview</h2>
-                        <div className="flex-1 max-w-md mx-8">
-                            <div className="relative group">
+                        <div className="flex flex-col">
+                            <h2 className="text-xl font-semibold text-slate-800">Overview</h2>
+                            <p className="text-xs text-slate-500">Welcome, {user?.name || "Administrator"}</p>
+                        </div>
+                        <div className="flex-1 max-w-4xl mx-8 flex items-center space-x-4">
+                            <div className="relative group flex-1">
                                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -193,6 +236,33 @@ const AdminDashboard = () => {
                                     }}
                                 />
                             </div>
+
+                            {activeView === "employees" && (
+                                <>
+                                    <select
+                                        className="h-10 pl-3 pr-8 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                                        value={selectedDept}
+                                        onChange={(e) => { setSelectedDept(e.target.value); setCurrentPage(1); }}
+                                    >
+                                        <option value="">All Departments</option>
+                                        <option value="IT">IT</option>
+                                        <option value="HR">HR</option>
+                                        <option value="Sales">Sales</option>
+                                        <option value="Marketing">Marketing</option>
+                                        <option value="Finance">Finance</option>
+                                    </select>
+                                    <select
+                                        className="h-10 pl-3 pr-8 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                                        value={selectedStatus}
+                                        onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
+                                    >
+                                        <option value="">All Status</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="On Leave">On Leave</option>
+                                    </select>
+                                </>
+                            )}
                         </div>
                         <div className="flex items-center space-x-4">
                             <button
@@ -209,7 +279,7 @@ const AdminDashboard = () => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     )}
                                 </svg>
-                                <span>{showForm ? "Close Form" : `Add ${activeView === 'employees' ? 'Employee' : 'User'}`}</span>
+                                <span>{showForm ? "Close Form" : `Add ${activeView === 'employees' ? 'Employee' : (activeView === 'admins' ? 'Admin' : 'User')}`}</span>
                             </button>
                             <span className="text-sm text-slate-500">Welcome, Administrator</span>
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
@@ -246,14 +316,18 @@ const AdminDashboard = () => {
                             {activeView === "employees" ? (
                                 <EmployeeTable
                                     employees={employees}
-                                    refresh={fetchEmployees}
+                                    refresh={() => { fetchEmployees(); fetchStats(); }}
                                     onEdit={handleEdit}
+                                    onSort={handleSort}
+                                    sortConfig={sortConfig}
                                 />
                             ) : (
                                 <UserTable
                                     users={admins}
-                                    refresh={fetchAdmins}
+                                    refresh={() => { fetchAdmins(); fetchStats(); }}
                                     onEdit={handleEdit}
+                                    onSort={handleSort}
+                                    sortConfig={sortConfig}
                                 />
                             )}
                         </div>
@@ -304,7 +378,7 @@ const AdminDashboard = () => {
                                 <div className="p-8">
                                     <div className="flex justify-between items-center mb-6">
                                         <h3 className="text-2xl font-bold text-slate-800">
-                                            {editId ? "Edit" : "Add New"} {activeView === 'employees' ? 'Employee' : 'User'}
+                                            {editId ? "Edit" : "Add New"} {activeView === 'employees' ? 'Employee' : (activeView === 'admins' ? 'Admin' : 'User')}
                                         </h3>
                                         <button
                                             onClick={closeModal}
@@ -339,29 +413,51 @@ const AdminDashboard = () => {
                                         </div>
 
                                         {activeView === "employees" ? (
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Salary</label>
-                                                    <input
-                                                        className="input-field w-full"
-                                                        placeholder="50000"
-                                                        type="number"
-                                                        required
-                                                        value={form.salary}
-                                                        onChange={(e) => setForm({ ...form, salary: e.target.value })}
-                                                    />
+                                            <>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-slate-700 mb-1">Salary</label>
+                                                        <input
+                                                            className="input-field w-full"
+                                                            placeholder="50000"
+                                                            type="number"
+                                                            required
+                                                            value={form.salary}
+                                                            onChange={(e) => setForm({ ...form, salary: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                                                        <input
+                                                            className="input-field w-full"
+                                                            placeholder="IT"
+                                                            required
+                                                            value={form.department}
+                                                            onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Department</label>
-                                                    <input
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                                                    <select
                                                         className="input-field w-full"
-                                                        placeholder="IT"
-                                                        required
-                                                        value={form.department}
-                                                        onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                                        value={form.status}
+                                                        onChange={(e) => setForm({ ...form, status: e.target.value })}
+                                                    >
+                                                        <option value="Active">Active</option>
+                                                        <option value="Inactive">Inactive</option>
+                                                        <option value="On Leave">On Leave</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Profile Photo</label>
+                                                    <input
+                                                        type="file"
+                                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all"
+                                                        onChange={(e) => setForm({ ...form, photo: e.target.files[0] })}
                                                     />
                                                 </div>
-                                            </div>
+                                            </>
                                         ) : (
                                             <>
                                                 <div>
@@ -372,7 +468,9 @@ const AdminDashboard = () => {
                                                         onChange={(e) => setForm({ ...form, role: e.target.value })}
                                                     >
                                                         <option value="user">User</option>
-                                                        <option value="admin">Admin</option>
+                                                        <option value="Editor">Editor</option>
+                                                        <option value="Admin">Admin</option>
+                                                        <option value="SuperAdmin">SuperAdmin</option>
                                                     </select>
                                                 </div>
                                                 <div>

@@ -1,24 +1,22 @@
 import React, { useState } from "react";
-import API from "../services/api";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUser } from "../redux/slices/authSlice";
 import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
     const [form, setForm] = useState({ name: "", email: "", password: "", role: "user" });
-    const [loading, setLoading] = useState(false);
+    const { loading, error } = useSelector((state) => state.auth);
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        try {
-            const res = await API.post("/auth/register", form);
-            localStorage.setItem("token", res.data.token);
+        const result = await dispatch(registerUser(form));
+        if (registerUser.fulfilled.match(result)) {
             alert("Registration successful! Welcome to the dashboard.");
             navigate("/admin");
-        } catch (err) {
-            alert(err.response?.data?.message || "Registration failed!");
-        } finally {
-            setLoading(false);
+        } else {
+            alert(result.payload || "Registration failed!");
         }
     };
 
@@ -68,7 +66,9 @@ const Register = () => {
                             onChange={(e) => setForm({ ...form, role: e.target.value })}
                         >
                             <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                            <option value="Editor">Editor</option>
+                            <option value="Admin">Admin</option>
+                            <option value="SuperAdmin">SuperAdmin</option>
                         </select>
                     </div>
 

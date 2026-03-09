@@ -1,7 +1,11 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const morgan = require("morgan");
+const path = require("path");
 const sequelize = require("./config/db.js");
+const errorMiddleware = require("./middleware/error.middleware");
+const logger = require("./utils/logger");
 
 const authRoutes = require("./routes/auth.routes.js");
 const employeeRoutes = require("./routes/employee.routes.js");
@@ -11,6 +15,17 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan("combined", { stream: { write: (message) => logger.info(message.trim()) } }));
+
+// Ensure uploads directory exists
+const fs = require("fs");
+const uploadDir = path.join(__dirname, "public/uploads");
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Serve Static Files
+app.use("/uploads", express.static(uploadDir));
 
 // Health check route
 app.get("/", (req, res) => {
@@ -20,8 +35,11 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/employees", employeeRoutes);
 
+// Error Middleware (Must be last)
+app.use(errorMiddleware);
+
 sequelize.sync({ alter: true }).then(() => {
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        logger.info(`Server running on port ${PORT}`);
     });
 });
