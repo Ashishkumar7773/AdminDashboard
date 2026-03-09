@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/auth";
+// const API_URL = "http://localhost:5000/api/auth";
+const API_URL = "https://admindashboard-0cnx.onrender.com/api/auth";
 
 // Async thunks for actions
 export const loginUser = createAsyncThunk("auth/login", async (userData, thunkAPI) => {
