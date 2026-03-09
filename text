@@ -1,0 +1,5 @@
+Role	Permissions
+SuperAdmin	Full Access: Manage Users (CRUD), Manage Employees (CRUD), View Stats.
+Admin	Manage Employees (CRUD), View Users, View Stats. Cannot delete other Admins/SuperAdmins.
+Editor	Can View Employees and Update Employee details. Cannot delete or add new ones.
+User	View-only access to Employee list and personal Dashboard Stats.
