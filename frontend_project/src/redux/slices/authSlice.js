@@ -1,31 +1,28 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api/auth";
-// const API_URL = "https://admindashboard-0cnx.onrender.com/api/auth";
+import API from "../../services/api";
 
 // Async thunks for actions
 export const loginUser = createAsyncThunk("auth/login", async (userData, thunkAPI) => {
     try {
-        const response = await axios.post(`${API_URL}/login`, userData);
+        const response = await API.post("/auth/login", userData);
         if (response.data.token) {
             localStorage.setItem("token", response.data.token);
         }
         return response.data;
     } catch (error) {
-        return thunkAPI.rejectWithValue(error.response.data.message || "Login failed");
+        return thunkAPI.rejectWithValue(error.response?.data?.message || "Login failed");
     }
 });
 
 export const registerUser = createAsyncThunk("auth/register", async (userData, thunkAPI) => {
     try {
-        const response = await axios.post(`${API_URL}/register`, userData);
+        const response = await API.post("/auth/register", userData);
         if (response.data.token) {
             localStorage.setItem("token", response.data.token);
         }
         return response.data;
     } catch (error) {
-        return thunkAPI.rejectWithValue(error.response.data.message || "Registration failed");
+        return thunkAPI.rejectWithValue(error.response?.data?.message || "Registration failed");
     }
 });
 

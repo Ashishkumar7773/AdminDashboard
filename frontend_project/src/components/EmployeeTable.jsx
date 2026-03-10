@@ -4,7 +4,7 @@ import { fetchEmployees } from "../redux/slices/employeeSlice";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { toast } from "react-toastify";
-import API from "../services/api";
+import API, { BASE_URL } from "../services/api";
 
 const EmployeeTable = ({ employees, refresh, onEdit, onSort, sortConfig, queryParams, loading }) => {
     const dispatch = useDispatch();
@@ -100,7 +100,7 @@ const EmployeeTable = ({ employees, refresh, onEdit, onSort, sortConfig, queryPa
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
                                             {emp.photo ? (
-                                                <img src={`http://localhost:5000${emp.photo}`} alt={emp.name} className="w-10 h-10 rounded-xl object-cover shadow-sm border border-primary/10 group-hover:scale-110 transition-transform" />
+                                                <img src={`${BASE_URL.replace("/api", "")}${emp.photo}`} alt={emp.name} className="w-10 h-10 rounded-xl object-cover shadow-sm border border-primary/10 group-hover:scale-110 transition-transform" />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-primary font-bold text-lg shadow-sm border border-primary/10 group-hover:scale-110 transition-transform">
                                                     {emp.name.charAt(0)}

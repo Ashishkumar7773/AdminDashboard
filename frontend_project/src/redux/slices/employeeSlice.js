@@ -1,22 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
-const API_URL = "http://localhost:5000/api/employees";
-// const API_URL = "https://admin-dashboard-pied-eight-54.vercel.app/api/employees";
+import API from "../../services/api";
 
 // Fetch employees with pagination and filters
 export const fetchEmployees = createAsyncThunk(
     "employees/fetchAll",
     async (params, thunkAPI) => {
         try {
-            const token = thunkAPI.getState().auth.token;
-            const response = await axios.get(API_URL, {
+            const response = await API.get("/employees", {
                 params,
-                headers: { Authorization: `Bearer ${token}` },
             });
             return response.data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data.message || "Failed to fetch employees");
+            return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch employees");
         }
     }
 );
