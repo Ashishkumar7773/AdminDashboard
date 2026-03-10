@@ -18,7 +18,6 @@ const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:5174",
-    "https://admin-dashboard-git-main-aashishmoil1998-gmailcoms-projects.vercel.app"
 ].filter(Boolean);
 
 app.use(cors({
@@ -26,12 +25,14 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        const isVercel = origin.endsWith(".vercel.app");
-        const isAllowed = allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*");
+        const isAllowed = allowedOrigins.includes(origin) ||
+            origin.endsWith(".vercel.app") ||
+            allowedOrigins.includes("*");
 
-        if (isAllowed || isVercel) {
+        if (isAllowed) {
             callback(null, true);
         } else {
+            logger.warn(`CORS blocked for origin: ${origin}`);
             callback(new Error("Not allowed by CORS"));
         }
     },

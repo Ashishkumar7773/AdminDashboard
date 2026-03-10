@@ -1,10 +1,6 @@
 import axios from "axios";
 
-const isProduction = import.meta.env.MODE === "production";
-const BASE_URL = import.meta.env.VITE_API_URL ||
-    (isProduction
-        ? "https://admindashboard-0cnx.onrender.com/api"
-        : "http://localhost:5000/api");
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const API = axios.create({
     baseURL: BASE_URL,

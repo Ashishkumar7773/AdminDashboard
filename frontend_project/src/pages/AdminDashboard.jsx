@@ -320,6 +320,7 @@ const AdminDashboard = () => {
                                     onEdit={handleEdit}
                                     onSort={handleSort}
                                     sortConfig={sortConfig}
+                                    currentUserRole={user?.role}
                                 />
                             ) : (
                                 <UserTable
@@ -328,6 +329,7 @@ const AdminDashboard = () => {
                                     onEdit={handleEdit}
                                     onSort={handleSort}
                                     sortConfig={sortConfig}
+                                    currentUserRole={user?.role}
                                 />
                             )}
                         </div>
