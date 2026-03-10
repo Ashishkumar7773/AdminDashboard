@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/employees";
+// const API_URL = "https://admin-dashboard-pied-eight-54.vercel.app/api/employees";
 
 // Fetch employees with pagination and filters
 export const fetchEmployees = createAsyncThunk(

@@ -58,7 +58,7 @@ app.use("/api/employees", employeeRoutes);
 // Error Middleware (Must be last)
 app.use(errorMiddleware);
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync().then(() => {
     app.listen(PORT, () => {
         logger.info(`Server running on port ${PORT}`);
     });
