@@ -112,7 +112,9 @@ exports.forgotPassword = async (req, res) => {
 
         // Send email via Brevo API
         const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
-        const resetUrl = `http://localhost:5173/reset-password/${token}`;
+        // Use req.headers.origin to automatically detect if it's localhost or Vercel
+        const clientUrl = req.headers.origin || process.env.CLIENT_URL || "http://localhost:5173";
+        const resetUrl = `${clientUrl}/reset-password/${token}`;
 
         const emailData = {
             subject: "Reset Your AdminPro Password",
@@ -153,7 +155,7 @@ exports.forgotPassword = async (req, res) => {
                             </div>
 
                             <p class="text">If you didn't request this, you can safely ignore this email. Your password won't change unless you click the link above and create a new one.</p>
-                            
+
                             <p class="expiry-note">This link will expire in <strong>60 minutes</strong> for security reasons.</p>
 
                             <div class="security-notice">
@@ -167,7 +169,7 @@ exports.forgotPassword = async (req, res) => {
                         </div>
                     </div>
                 </body>
-                </html>
+            </html>
             `,
             sender: { "name": "Admin Dashboard", "email": process.env.EMAIL_FROM || "no-reply@admin.com" },
             to: [{ "email": user.email, "name": user.name }]
