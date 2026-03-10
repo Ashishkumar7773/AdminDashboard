@@ -17,6 +17,7 @@ const allowedOrigins = [
     process.env.CLIENT_URL,
     "http://localhost:5173",
     "http://localhost:3000",
+    "http://localhost:5174",
     "https://admin-dashboard-git-main-aashishmoil1998-gmailcoms-projects.vercel.app"
 ].filter(Boolean);
 
