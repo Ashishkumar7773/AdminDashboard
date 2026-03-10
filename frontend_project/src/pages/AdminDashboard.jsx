@@ -38,6 +38,8 @@ const AdminDashboard = () => {
         totalAdmins: 0,
         totalUsers: 0
     });
+    const [localTotalRecords, setLocalTotalRecords] = useState(0);
+    const [localTotalPages, setLocalTotalPages] = useState(1);
 
     const fetchStats = async () => {
         try {
@@ -75,8 +77,8 @@ const AdminDashboard = () => {
             const roleFilter = activeView === "admins" ? "Admin" : (activeView === "users" ? "user" : "");
             const res = await API.get(`/auth/users?page=${currentPage}&limit=${pageSize}&search=${searchTerm}&sortBy=${sortConfig.key}&order=${sortConfig.direction}&role=${roleFilter}`);
             setAdmins(res.data.users);
-            setTotalPages(res.data.pages);
-            setTotalRecords(res.data.total);
+            setLocalTotalPages(res.data.pages);
+            setLocalTotalRecords(res.data.total);
         } catch (err) {
             console.error("Error fetching admins", err);
         } finally {
@@ -309,7 +311,9 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 gap-8">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="text-2xl font-bold text-slate-800 capitalize">{activeView} List</h3>
-                            <span className="text-slate-400 text-sm">{totalRecords} total records</span>
+                            <span className="text-slate-400 text-sm">
+                                {activeView === "employees" ? totalRecords : localTotalRecords} total records
+                            </span>
                         </div>
                         {/* Employee/Admin Table */}
                         <div className="card p-0 overflow-hidden">
@@ -335,36 +339,38 @@ const AdminDashboard = () => {
                         </div>
 
                         {/* Pagination Controls */}
-                        <div className="flex justify-between items-center mt-6">
-                            <div className="text-sm text-slate-500">
-                                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} entries
-                            </div>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Previous
-                                </button>
-                                {[...Array(totalPages)].map((_, i) => (
+                        {(activeView === "employees" ? totalRecords : localTotalRecords) >= 5 && (
+                            <div className="flex justify-between items-center mt-6">
+                                <div className="text-sm text-slate-500">
+                                    Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, activeView === "employees" ? totalRecords : localTotalRecords)} of {activeView === "employees" ? totalRecords : localTotalRecords} entries
+                                </div>
+                                <div className="flex space-x-2">
                                     <button
-                                        key={i + 1}
-                                        onClick={() => setCurrentPage(i + 1)}
-                                        className={`px-4 py-2 rounded-lg transition-colors ${currentPage === i + 1 ? "bg-primary text-white" : "border border-slate-200 hover:bg-slate-50"}`}
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        {i + 1}
+                                        Previous
                                     </button>
-                                ))}
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    Next
-                                </button>
+                                    {[...Array(activeView === "employees" ? totalPages : localTotalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`px-4 py-2 rounded-lg transition-colors ${currentPage === i + 1 ? "bg-primary text-white" : "border border-slate-200 hover:bg-slate-50"}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, activeView === "employees" ? totalPages : localTotalPages))}
+                                        disabled={currentPage === (activeView === "employees" ? totalPages : localTotalPages)}
+                                        className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Add/Edit Modal */}
