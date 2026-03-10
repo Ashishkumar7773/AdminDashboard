@@ -148,11 +148,20 @@ const AdminDashboard = () => {
                 fetchEmployees();
                 fetchStats();
             } else {
+                const payload = {
+                    name: form.name,
+                    email: form.email,
+                    role: form.role,
+                };
+                if (form.password) {
+                    payload.password = form.password;
+                }
+
                 if (editId) {
-                    await API.put(`/auth/users/${editId}`, form);
+                    await API.put(`/auth/users/${editId}`, payload);
                     toast.success("User updated successfully!");
                 } else {
-                    await API.post("/auth/register", form);
+                    await API.post("/auth/register", payload);
                     toast.success("User added successfully!");
                 }
                 fetchAdmins();
@@ -189,13 +198,15 @@ const AdminDashboard = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 01-9-4.915" /></svg>
                         <span>Employees</span>
                     </button>
-                    <button
-                        onClick={() => { setActiveView("admins"); closeModal(); }}
-                        className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "admins" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                        <span>Admins</span>
-                    </button>
+                    {user?.role === "SuperAdmin" && (
+                        <button
+                            onClick={() => { setActiveView("admins"); closeModal(); }}
+                            className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "admins" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                            <span>Admins</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => { setActiveView("users"); closeModal(); }}
                         className={`flex items-center space-x-3 p-3 w-full rounded-lg transition-colors cursor-pointer ${activeView === "users" ? "bg-primary/20 text-blue-400" : "hover:bg-white/5"}`}
@@ -269,10 +280,10 @@ const AdminDashboard = () => {
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => setShowForm(!showForm)}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${showForm
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${((activeView === 'admins' || activeView === 'users') && user?.role !== 'SuperAdmin' && !showForm) ? "hidden" : (showForm
                                     ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
                                     : "bg-primary hover:bg-primary-dark text-white cursor-pointer"
-                                    }`}
+                                )}`}
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     {showForm ? (
@@ -441,7 +452,10 @@ const AdminDashboard = () => {
                                                             placeholder="IT"
                                                             required
                                                             value={form.department}
-                                                            onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                                                                setForm({ ...form, department: value });
+                                                            }}
                                                         />
                                                     </div>
                                                 </div>

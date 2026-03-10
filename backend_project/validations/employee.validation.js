@@ -4,7 +4,7 @@ const employeeSchema = Joi.object({
     name: Joi.string().min(3).max(50).required(),
     email: Joi.string().email().required(),
     salary: Joi.number().integer().min(1).required(),
-    department: Joi.string().required(),
+    department: Joi.string().regex(/^[a-zA-Z\s]+$/).message("Department must contain only letters and spaces").required(),
     status: Joi.string().valid("Active", "Inactive", "On Leave").default("Active"),
 });
 
