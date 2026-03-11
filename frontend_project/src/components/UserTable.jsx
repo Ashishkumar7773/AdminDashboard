@@ -84,8 +84,9 @@ const SortHeader = ({ label, sortKey, onSort, sortConfig }) => {
 };
 
 const UserRow = ({ user, onEdit, onDelete, currentUserRole, getRoleColor }) => {
-    const canEdit = currentUserRole === "SuperAdmin" || (currentUserRole === "Admin" && user.role === "user");
-    const canDelete = currentUserRole === "SuperAdmin";
+    const role = currentUserRole?.toLowerCase();
+    const canEdit = role === "superadmin" || (role === "admin" && user.role?.toLowerCase() === "user");
+    const canDelete = role === "superadmin";
 
     return (
         <tr className="group hover:bg-slate-50/80 transition-all duration-200 select-none">

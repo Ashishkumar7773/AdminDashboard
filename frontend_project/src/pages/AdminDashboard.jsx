@@ -136,7 +136,7 @@ const AdminDashboard = () => {
         };
 
         if (activeView === "employees") {
-            setForm({ ...baseForm, salary: item.salary, department: item.department, status: item.status || "Active", photo: null });
+            setForm({ ...baseForm, salary: item.salary, department: item.department, status: item.status || "Active", photo: item.photo });
         } else {
             setForm({ ...baseForm, role: item.role, password: "", status: "Active", photo: null });
         }
@@ -216,7 +216,7 @@ const AdminDashboard = () => {
                         icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 01-9-4.915" /></svg>}
                         label="Employees"
                     />
-                    {user?.role === "SuperAdmin" && (
+                    {user?.role?.toLowerCase() === "superadmin" && (
                         <NavItem
                             active={activeView === "admins"}
                             onClick={() => { setActiveView("admins"); closeModal(); }}
@@ -286,7 +286,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => setShowForm(!showForm)}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${((activeView === 'admins' || activeView === 'users') && user?.role !== 'SuperAdmin' && !showForm) ? "hidden" : (showForm
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${((activeView === 'admins' || activeView === 'users') && user?.role?.toLowerCase() !== 'superadmin' && !showForm) ? "hidden" : (showForm
                                     ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md"
                                     : "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-md"
                                 )}`}

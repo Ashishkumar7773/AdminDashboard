@@ -105,7 +105,15 @@ const EmployeeRow = ({ emp, onEdit, onDelete, currentUserRole, getDeptColor }) =
         <td className="px-6 py-4">
             <div className="flex items-center">
                 {emp.photo ? (
-                    <img src={`${BASE_URL.replace("/api", "")}${emp.photo}`} alt={emp.name} className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-200 group-hover:scale-110 transition-transform" />
+                    <img
+                        src={`${BASE_URL.replace("/api", "")}${emp.photo.startsWith('/') ? emp.photo : '/' + emp.photo}`}
+                        alt={emp.name}
+                        className="w-10 h-10 rounded-xl object-cover shadow-sm border border-slate-200 group-hover:scale-110 transition-transform"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(emp.name) + "&background=EEF2FF&color=4F46E5&bold=true";
+                        }}
+                    />
                 ) : (
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg shadow-sm border border-indigo-100 group-hover:scale-110 transition-transform">
                         {emp.name.charAt(0)}
@@ -143,7 +151,7 @@ const EmployeeRow = ({ emp, onEdit, onDelete, currentUserRole, getDeptColor }) =
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 </button>
-                {currentUserRole === "SuperAdmin" && (
+                {currentUserRole?.toLowerCase() === "superadmin" && (
                     <button
                         onClick={() => onDelete(emp.id)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
