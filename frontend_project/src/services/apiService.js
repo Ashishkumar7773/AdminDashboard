@@ -24,6 +24,7 @@ const apiService = {
 
     // Stats
     getDashboardStats: () => API.get("/auth/stats"),
+    getMe: () => API.get("/auth/me"),
 };
 
 export default apiService;

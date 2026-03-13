@@ -9,7 +9,17 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ErrorHandler = require("../utils/ErrorHandler");
 
 exports.register = catchAsyncErrors(async (req, res, next) => {
-    const { name, email, password, role } = req.body;
+    let { name, email, password, role } = req.body;
+
+    const userCount = await User.count();
+
+    if (userCount === 0) {
+        // First user is automatically SuperAdmin
+        role = "SuperAdmin";
+    } else if (!role) {
+        role = "user";
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
         name,
@@ -47,6 +57,14 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
     res.json({ token, user: userResponse });
 });
 
+exports.getMe = catchAsyncErrors(async (req, res, next) => {
+    const user = await User.findByPk(req.user.id, {
+        attributes: { exclude: ["password"] }
+    });
+    if (!user) return next(new ErrorHandler("User not found", 404));
+    res.json({ success: true, user });
+});
+
 exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     const { page = 1, limit = 5, search = "", sortBy = "createdAt", order = "DESC", role = "" } = req.query;
     const offset = (page - 1) * limit;
@@ -62,16 +80,17 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
         whereClause.role = role;
     }
 
-    const { count, rows } = await User.findAndCountAll({
-        where: whereClause,
-        attributes: { exclude: ["password"] },
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [[sortBy, order]]
-    });
-
-    const totalAdmins = await User.count({ where: { role: 'admin' } });
-    const totalUsers = await User.count({ where: { role: 'user' } });
+    const [{ count, rows }, totalAdmins, totalUsers] = await Promise.all([
+        User.findAndCountAll({
+            where: whereClause,
+            attributes: { exclude: ["password"] },
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            order: [[sortBy, order]]
+        }),
+        User.count({ where: { role: 'admin' } }),
+        User.count({ where: { role: 'user' } })
+    ]);
 
     res.json({
         total: count,
@@ -181,17 +200,19 @@ exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getDashboardStats = catchAsyncErrors(async (req, res, next) => {
-    const totalEmployees = await Employee.count();
-    const totalAdmins = await User.count({
-        where: {
-            role: { [Op.in]: ['Admin', 'SuperAdmin'] }
-        }
-    });
-    const totalUsers = await User.count({
-        where: {
-            role: 'user'
-        }
-    });
+    const [totalEmployees, totalAdmins, totalUsers] = await Promise.all([
+        Employee.count(),
+        User.count({
+            where: {
+                role: { [Op.in]: ['Admin', 'SuperAdmin'] }
+            }
+        }),
+        User.count({
+            where: {
+                role: 'user'
+            }
+        })
+    ]);
 
     res.json({
         totalEmployees,

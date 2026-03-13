@@ -1,3 +1,72 @@
+Project Overview: AdminPro Dashboard
+AdminPro is a full-stack administrative management system designed to manage users and employees efficiently. It features a modern, responsive UI and a robust backend with role-based access control.
+
+🚀 Tech Stack
+Frontend: React.js, Redux Toolkit (State Management), React Router, Axios, Framer Motion (Animations).
+Backend: Node.js, Express.js.
+Database: MySQL (using Sequelize ORM).
+Authentication: JSON Web Tokens (JWT), Bcrypt.js (Password Hashing).
+Email Service: Brevo API (Transactional Emails for password recovery).
+File Storage: Local filesystem (/uploads directory for employee photos).
+🏗️ Project Architecture
+1. Backend (backend_project)
+Models: Defines table structures for 
+Users
+ and Employees.
+Controllers: Contains the business logic for authentication and CRUD operations.
+Routes: Maps API endpoints to controller functions.
+Middleware: Handles JWT verification, file uploads (Multer), and error handling.
+2. Frontend (frontend_project)
+Pages: UI views for Dashboard, Login, Register, etc.
+Redux Slices: Manages global state for authentication and employee data.
+Components: Reusable UI elements (Sidebar, Navbar, Tables, Forms).
+🛠️ Step-by-Step Functionality
+Step 1: User Registration & Authentication
+Registration: New admins or users can sign up. You can choose roles like Admin, Editor, or user.
+Login: Secure login using email and password. Upon success, a JWT token is stored to keep you logged in.
+Protected Access: Only authenticated users can access the dashboard.
+Step 2: Dashboard Insights
+Once logged in, the Admin Dashboard provides a high-level summary:
+
+Stats Cards: Displays total counts of Employees, Admins, and Users.
+Data Tables: Paginated lists of users and employees with search and sort functionality.
+Step 3: User Management (RBAC)
+Administrators can manage the accounts of other team members:
+
+Search/Filter: Find users by name, email, or role.
+Edit: Update user details or change their administrative permissions.
+Delete: Remove user accounts (safety check: you cannot delete your own account).
+Step 4: Employee Management (CRUD)
+The core feature for HR/Management:
+
+Add Employee: Create new profiles with details like department, salary, and status.
+Photo Uploads: Upload profile pictures for employees, which are stored securely on the server.
+Status Tracking: Track if an employee is Active or Inactive.
+Pagination: Manage large lists of employees with smooth page transitions.
+Step 5: Password Recovery
+Forgot Password: Users can request a reset link.
+Email Integration: The system sends a professional email via Brevo with a unique, time-limited reset link.
+Reset Logic: Securely update passwords after verification.
+🏃 How to Run the Project
+1. Start the Backend
+bash
+cd backend_project
+npm install
+# Ensure your .env is configured with MySQL credentials
+npm start
+2. Start the Frontend
+bash
+cd frontend_project
+npm install
+npm run dev
+The application will be available at http://localhost:5173.
+
+
+Comment
+Ctrl+Alt+M
+
+
+
 Role	Permissions
 SuperAdmin	Full Access: Manage Users (CRUD), Manage Employees (CRUD), View Stats.
 Admin	Manage Employees (CRUD), View Users, View Stats. Cannot delete other Admins/SuperAdmins.

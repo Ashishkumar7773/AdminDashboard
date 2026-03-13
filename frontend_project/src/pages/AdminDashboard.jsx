@@ -286,7 +286,10 @@ const AdminDashboard = () => {
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => setShowForm(!showForm)}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${((activeView === 'admins' || activeView === 'users') && user?.role?.toLowerCase() !== 'superadmin' && !showForm) ? "hidden" : (showForm
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${(
+                                    (activeView === 'admins' && user?.role?.toLowerCase() !== 'superadmin') ||
+                                    (activeView === 'users' && !['superadmin', 'admin'].includes(user?.role?.toLowerCase()))
+                                ) && !showForm ? "hidden" : (showForm
                                     ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer shadow-md"
                                     : "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-md"
                                 )}`}

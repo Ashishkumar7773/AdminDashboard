@@ -8,9 +8,9 @@ const ProtectedRoute = ({ children }) => {
     if (!token) return <Navigate to="/login" />;
 
     const decoded = jwtDecode(token);
-    const allowedRoles = ["Admin", "SuperAdmin", "Editor"];
+    const allowedRoles = ["admin", "superadmin", "editor"];
 
-    if (!allowedRoles.includes(decoded.role)) {
+    if (!decoded.role || !allowedRoles.includes(decoded.role.toLowerCase())) {
         return <Navigate to="/login" />;
     }
 
